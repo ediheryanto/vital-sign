@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otomatisasi Tensi dan Parameter Kesehatan</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+            width: 0;
+            transition: width 2s ease-out, background-color 2s ease;
+        }
+        .resusitasi {
+            background-color: red;
+        }
+        .emergency {
+            background-color: darkred;
+        }
+        .urgent {
+            background-color: yellow;
+            color: black;
+        }
+        .non-urgent {
+            background-color: green;
+        }
+        .false-emergency {
+            background-color: white;
+            color: black;
+        }
+        .reset-bg {
+            transition: none;
+            background-color: transparent;
+            width: 0 !important;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .container {
+            max-width: 800px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td, th {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mt-4">Otomatisasi Tensi dan Parameter Kesehatan</h2>
+    <form id="healthForm">
+        <table>
+            <tr>
+                <th>GCS</th>
+                <td><label for="eye">Eye</label><input type="number" class="form-control" id="eye" name="eye" min="1" max="4"></td>
+                <td><label for="verbal">Verbal</label><input type="number" class="form-control" id="verbal" name="verbal" min="1" max="5"></td>
+                <td><label for="motorik">Motorik</label><input type="number" class="form-control" id="motorik" name="motorik" min="1" max="6"></td>
+                <td><label for="totalGCS">Total GCS</label><input type="number" class="form-control" id="totalGCS" name="totalGCS" readonly></td>
+                <td><label for="spo2">SPO2</label><input type="number" class="form-control" id="spo2" name="spo2"><span>%</span></td>
+            </tr>
+            <tr>
+                <th>TTV</th>
+                <td><label for="sistolik">TD Sistol</label><input type="number" class="form-control" id="sistolik" name="sistolik"><span>mmHg</span></td>
+                <td><label for="diastolik">TD Diastol</label><input type="number" class="form-control" id="diastolik" name="diastolik"><span>mmHg</span></td>
+                <td><label for="nadi">Nadi</label><input type="number" class="form-control" id="nadi" name="nadi"><span>X/Menit</span></td>
+                <td><label for="respirasi">Respirasi</label><input type="number" class="form-control" id="respirasi" name="respirasi"><span>X/Menit</span></td>
+                <td><label for="map">MAP</label><input type="number" class="form-control" id="map" name="map" readonly><span>mmHg</span></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><label for="suhu">Suhu</label><input type="number" step="0.1" class="form-control" id="suhu" name="suhu"><span>°C</span></td>
+                <td><label for="nyeri">Sekala Nyeri</label><input type="number" class="form-control" id="nyeri" name="nyeri"></td>
+                <td><label for="beratBadan">Berat Badan</label><input type="number" step="0.1" class="form-control" id="beratBadan" name="beratBadan"><span>Kg</span></td>
+                <td><label for="tinggiBadan">Tinggi Badan</label><input type="number" class="form-control" id="tinggiBadan" name="tinggiBadan"><span>cm</span></td>
+                <td><label for="imt">IMT</label><input type="number" step="0.1" class="form-control" id="imt" name="imt" readonly></td>
+            </tr>
+            <tr>
+                <th>CRT</th>
+                <td><input type="checkbox" id="chexBookYa"><label for="chexBookYa">> 2 Detik</label></td>
+                <td><input type="checkbox" id="chexBookTidak"><label for="chexBookTidak">< 2 Detik</label></td>
+                <td colspan="3"></td>
+            </tr>
+        </table>
+
+        <!-- Status -->
+        <div id="status" class="status"></div>
+    </form>
+</div>
+
+    <script>
+function updateStatus() {
+  var sistolik = parseFloat(document.getElementById("sistolik").value) || null;
+  var diastolik = parseFloat(document.getElementById("diastolik").value) || null;
+  var respirasi = parseFloat(document.getElementById("respirasi").value) || null;
+  var nadi = parseFloat(document.getElementById("nadi").value) || null;
+  var suhu = parseFloat(document.getElementById("suhu").value) || null;
+  var spo2 = parseFloat(document.getElementById("spo2").value) || null;
+  var map = parseFloat(document.getElementById("map").value) || null;
+  var beratBadan = parseFloat(document.getElementById("beratBadan").value) || null;
+  var tinggiBadan = parseFloat(document.getElementById("tinggiBadan").value) || null;
+  var eye = parseFloat(document.getElementById("eye").value) || 0;
+  var motorik = parseFloat(document.getElementById("motorik").value) || 0;
+  var verbal = parseFloat(document.getElementById("verbal").value) || 0;
+  var chexBookYa = document.getElementById("chexBookYa").checked;
+  var chexBookTidak = document.getElementById("chexBookTidak").checked;
+
+  // Hitung MAP
+  var calculatedMAP = (sistolik !== null && diastolik !== null) ? (sistolik + 2 * diastolik) / 3 : null;
+  document.getElementById("map").value = calculatedMAP ? calculatedMAP.toFixed(1) : "";
+
+  // Hitung IMT
+  var imt = beratBadan && tinggiBadan ? beratBadan / ((tinggiBadan / 100) ** 2) : null;
+  document.getElementById("imt").value = imt ? imt.toFixed(1) : "";
+
+  // Hitung Total GCS
+  var totalGCS = eye + motorik + verbal;
+  document.getElementById("totalGCS").value = totalGCS;
+
+  // Prioritas berdasarkan parameter kesehatan
+  var statusDiv = document.getElementById("status");
+  var hipertensiCheckbox = document.getElementById("hipertensi");
+  var hipotensiCheckbox = document.getElementById("hipotensi");
+  var takipneaCheckbox = document.getElementById("takipnea");
+  var bradipneaCheckbox = document.getElementById("bradipnea");
+
+  var priority = 5; // Prioritas terendah
+
+  // Prioritas berdasarkan parameter kesehatan
+  if (sistolik !== null && diastolik !== null) {
+    if (sistolik >= 200 || diastolik < 30) {
+      priority = Math.min(priority, 1);
+    } else if ((sistolik >= 150 && sistolik < 200) || diastolik >= 140) {
+      priority = Math.min(priority, 2);
+    } else if (
+      (sistolik >= 130 && sistolik < 150) ||
+      (diastolik >= 90 && diastolik < 140)
+    ) {
+      priority = Math.min(priority, 3);
+    } else if (
+      sistolik >= 100 &&
+      sistolik < 130 &&
+      diastolik >= 60 &&
+      diastolik < 90
+    ) {
+      priority = Math.min(priority, 4);
+    }
+  }
+
+  // Respirasi
+  if (respirasi !== null) {
+    if (respirasi > 20) {
+      priority = Math.min(priority, 3);
+    } else if (respirasi < 12) {
+      priority = Math.min(priority, 1);
+    }
+  }
+
+  // Nadi
+  if (nadi !== null) {
+    if (nadi > 120 || nadi < 60) {
+      priority = Math.min(priority, 3);
+    }
+  }
+
+  // Suhu
+  if (suhu !== null) {
+    if (suhu > 38 || suhu < 35) {
+      priority = Math.min(priority, 2);
+    }
+  }
+
+  // SPO2
+  if (spo2 !== null) {
+    if (spo2 < 90) {
+      priority = Math.min(priority, 1);
+    }
+  }
+
+  // MAP
+  if (calculatedMAP !== null) {
+    if (calculatedMAP < 60) {
+      priority = Math.min(priority, 1);
+    }
+  }
+
+  // Chex Book
+  if (chexBookTidak) {
+    priority = Math.min(priority, 2);
+  }
+
+  // Status GCS
+  var gcsPriority = 5; // Prioritas terendah
+  if (totalGCS >= 15) {
+    gcsPriority = 4;
+  } else if (totalGCS >= 13) {
+    gcsPriority = 3;
+  } else if (totalGCS >= 10) {
+    gcsPriority = 2;
+  } else if (totalGCS >= 3) {
+    gcsPriority = 1;
+  }
+
+  // Gabungkan prioritas GCS dan parameter lainnya
+  priority = Math.min(priority, gcsPriority);
+
+  // Set status text dan class berdasarkan prioritas keseluruhan
+  var statusText = "";
+  var statusClass = "";
+
+  switch (priority) {
+    case 1:
+      statusText = "RESUSITASI (Prioritas 1)";
+      statusClass = "resusitasi";
+      break;
+    case 2:
+      statusText = "EMERGENCY (Prioritas 2)";
+      statusClass = "emergency";
+      break;
+    case 3:
+      statusText = "URGENT (Prioritas 3)";
+      statusClass = "urgent";
+      break;
+    case 4:
+      statusText = "NON URGENT (Prioritas 4)";
+      statusClass = "non-urgent";
+      break;
+    default:
+      statusText = "FALSE EMERGENCY (Prioritas 5)";
+      statusClass = "false-emergency";
+  }
+
+  // Update status div
+  if (statusText) {
+    statusDiv.textContent = statusText;
+    statusDiv.className = "status reset-bg";
+    statusDiv.style.display = "block";
+    setTimeout(() => {
+      statusDiv.className = "status " + statusClass;
+      statusDiv.style.width = "100%";
+    }, 10);
+  } else {
+    statusDiv.style.display = "none";
+  }
+
+  // Update checkboxes
+  hipertensiCheckbox.checked = priority <= 2;
+  hipotensiCheckbox.checked = priority === 1;
+  takipneaCheckbox.checked = priority === 3;
+  bradipneaCheckbox.checked = priority === 1;
+}
+
+// Tambahkan event listener untuk semua input
+document.getElementById("sistolik").addEventListener("input", updateStatus);
+document.getElementById("diastolik").addEventListener("input", updateStatus);
+document.getElementById("respirasi").addEventListener("input", updateStatus);
+document.getElementById("nadi").addEventListener("input", updateStatus);
+document.getElementById("suhu").addEventListener("input", updateStatus);
+document.getElementById("spo2").addEventListener("input", updateStatus);
+document.getElementById("beratBadan").addEventListener("input", updateStatus);
+document.getElementById("tinggiBadan").addEventListener("input", updateStatus);
+document.getElementById("eye").addEventListener("input", updateStatus);
+document.getElementById("motorik").addEventListener("input", updateStatus);
+document.getElementById("verbal").addEventListener("input", updateStatus);
+document.getElementById("chexBookYa").addEventListener("change", updateStatus);
+document.getElementById("chexBookTidak").addEventListener("change", updateStatus);
+
+// Inisialisasi status pada saat halaman dimuat
+document.addEventListener("DOMContentLoaded", updateStatus);
+    </script>
+  </body>
+</html>
